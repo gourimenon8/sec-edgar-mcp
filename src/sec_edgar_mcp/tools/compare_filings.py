@@ -1,29 +1,21 @@
 """
 Tool: compare_filings
 Compares financial metrics across two periods for the same company.
-Highlights absolute and percentage changes — the core of what analysts do manually.
 """
 
-from typing import Optional
-from .get_financials import get_financials, FINANCIAL_CONCEPTS, METRIC_GROUPS
+from .get_financials import get_financials
 
 
-def _find_period(data_series: list[dict], period_end: str) -> Optional[dict]:
-    """Find a specific period entry by its end date."""
+def _find_period(data_series: list[dict], period_end: str) -> dict | None:
     for entry in data_series:
-        if entry.get("period_end", "").startswith(period_end[:7]):  # match YYYY-MM
+        if entry.get("period_end", "").startswith(period_end[:7]):
             return entry
     return None
 
 
 def _compute_change(val_a: float, val_b: float) -> dict:
-    """Compute absolute and percentage change from period_a to period_b."""
     absolute = val_b - val_a
-    if val_a != 0:
-        pct = round((absolute / abs(val_a)) * 100, 2)
-    else:
-        pct = None
-
+    pct = round((absolute / abs(val_a)) * 100, 2) if val_a != 0 else None
     return {
         "period_a_value": val_a,
         "period_b_value": val_b,
@@ -45,24 +37,13 @@ async def compare_filings(
 
     Args:
         cik:         Company CIK (from search_company)
-        period_a:    Earlier period end date in YYYY-MM or YYYY-MM-DD format
-                     (e.g., "2023-09", "2023-09-30")
-        period_b:    Later period end date in YYYY-MM or YYYY-MM-DD format
-                     (e.g., "2024-09", "2024-09-30")
-        metrics:     Which metrics to compare — same options as get_financials:
-                     'income_statement', 'balance_sheet', 'cash_flow', 'all',
-                     or comma-separated metric names
-        period_type: 'quarterly' (10-Q) or 'annual' (10-K)
-
-    Returns:
-        dict with side-by-side comparison and computed changes for each metric
+        period_a:    Earlier period end date — YYYY-MM or YYYY-MM-DD
+        period_b:    Later period end date   — YYYY-MM or YYYY-MM-DD
+        metrics:     Same options as get_financials
+        period_type: 'quarterly' or 'annual'
     """
-    # Pull enough history to cover both periods
     financial_data = await get_financials(
-        cik=cik,
-        metrics=metrics,
-        period_type=period_type,
-        limit=12,
+        cik=cik, metrics=metrics, period_type=period_type, limit=12
     )
 
     if "error" in financial_data:
@@ -93,26 +74,13 @@ async def compare_filings(
 
         change = _compute_change(float(val_a), float(val_b))
         comparison[metric_name] = {
-            "period_a": {
-                "end_date": entry_a.get("period_end"),
-                "value": val_a,
-                "filed": entry_a.get("filed"),
-            },
-            "period_b": {
-                "end_date": entry_b.get("period_end"),
-                "value": val_b,
-                "filed": entry_b.get("filed"),
-            },
+            "period_a": {"end_date": entry_a.get("period_end"), "value": val_a},
+            "period_b": {"end_date": entry_b.get("period_end"), "value": val_b},
             **change,
         }
 
-    # Build summary of most notable changes
     notable = sorted(
-        [
-            (k, v)
-            for k, v in comparison.items()
-            if v.get("percent_change") is not None
-        ],
+        [(k, v) for k, v in comparison.items() if v.get("percent_change") is not None],
         key=lambda x: abs(x[1]["percent_change"]),
         reverse=True,
     )[:5]
@@ -121,15 +89,10 @@ async def compare_filings(
         "cik": cik,
         "period_a": period_a,
         "period_b": period_b,
-        "period_type": period_type,
         "metrics_compared": len(comparison),
         "comparison": comparison,
         "top_5_changes_by_magnitude": [
-            {
-                "metric": k,
-                "percent_change": v["percent_change"],
-                "direction": v["direction"],
-            }
+            {"metric": k, "percent_change": v["percent_change"], "direction": v["direction"]}
             for k, v in notable
         ],
     }

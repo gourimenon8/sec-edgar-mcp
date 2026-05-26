@@ -11,12 +11,8 @@ async def search_company(query: str) -> dict:
     Search for a company by name or ticker and return its CIK and metadata.
 
     Args:
-        query: Company name (e.g., "Apple Inc") or ticker symbol (e.g., "AAPL")
-
-    Returns:
-        dict with company name, CIK, and ticker if resolved
+        query: Company name (e.g., 'Apple Inc') or ticker symbol (e.g., 'AAPL')
     """
-    # Try ticker resolution first — faster and more precise
     cik = await get_cik_from_ticker(query)
     if cik:
         return {
@@ -26,7 +22,6 @@ async def search_company(query: str) -> dict:
             "note": f"CIK resolved from ticker '{query.upper()}'. Use this CIK in other tools.",
         }
 
-    # Fall back to name search
     results = await search_company_by_name(query)
     if not results:
         return {
