@@ -1,6 +1,6 @@
 """
 SEC EDGAR API client.
-Handles all HTTP communication with the SEC's public EDGAR endpoints.
+Handles all HTTP communication with the SEC public EDGAR endpoints.
 """
 
 import os
@@ -10,8 +10,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# SEC requires a User-Agent header in the format "appname email@example.com"
-# Set SEC_USER_AGENT in your .env file — see .env.example
 _user_agent = os.getenv("SEC_USER_AGENT", "sec-edgar-mcp your-email@example.com")
 
 HEADERS = {
@@ -52,7 +50,6 @@ async def search_company_by_name(name: str) -> list[dict]:
         response = await client.get(url, params=params)
         response.raise_for_status()
         data = response.json()
-
     hits = data.get("hits", {}).get("hits", [])
     seen = {}
     for hit in hits:
@@ -65,7 +62,7 @@ async def search_company_by_name(name: str) -> list[dict]:
 
 
 async def get_cik_from_ticker(ticker: str) -> Optional[str]:
-    """Resolve a stock ticker to a CIK using SEC's company_tickers.json."""
+    """Resolve a stock ticker to a CIK using SEC company_tickers.json."""
     url = "https://www.sec.gov/files/company_tickers.json"
     data = await get_json(url)
     ticker_upper = ticker.upper()

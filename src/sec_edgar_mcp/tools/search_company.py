@@ -8,10 +8,10 @@ from ..edgar_client import search_company_by_name, get_cik_from_ticker
 
 async def search_company(query: str) -> dict:
     """
-    Search for a company by name or ticker and return its CIK and metadata.
+    Search for a company by name or ticker and return its CIK.
 
     Args:
-        query: Company name (e.g., 'Apple Inc') or ticker symbol (e.g., 'AAPL')
+        query: Company name or ticker symbol
     """
     cik = await get_cik_from_ticker(query)
     if cik:
@@ -33,5 +33,5 @@ async def search_company(query: str) -> dict:
         "resolved_via": "name_search",
         "query": query,
         "matches": results,
-        "note": "Multiple matches found. Use the CIK of your intended company in other tools.",
+        "note": "Multiple matches found. Use the CIK of your intended company.",
     }

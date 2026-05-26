@@ -1,6 +1,6 @@
 """
 Tool: get_financials
-Fetches structured financial data for a company from SEC XBRL filings.
+Fetches structured financial data from SEC XBRL filings.
 """
 
 from ..edgar_client import fetch_company_concept
@@ -20,7 +20,6 @@ FINANCIAL_CONCEPTS = {
     "long_term_debt": ("us-gaap", "LongTermDebt"),
     "current_assets": ("us-gaap", "AssetsCurrent"),
     "current_liabilities": ("us-gaap", "LiabilitiesCurrent"),
-    # Note: free_cash_flow is computed below (OCF - capex), not a native XBRL tag
     "operating_cash_flow": ("us-gaap", "NetCashProvidedByUsedInOperatingActivities"),
     "capex": ("us-gaap", "PaymentsToAcquirePropertyPlantAndEquipment"),
 }
@@ -58,14 +57,13 @@ async def get_financials(
     limit: int = 8,
 ) -> dict:
     """
-    Retrieve structured financial data for a company from XBRL-tagged SEC filings.
+    Retrieve structured financial data from XBRL-tagged SEC filings.
 
     Args:
-        cik:         Company CIK (from search_company)
-        metrics:     'income_statement' | 'balance_sheet' | 'cash_flow' | 'all'
-                     or comma-separated metric names
-        period_type: 'quarterly' or 'annual'
-        limit:       Number of periods to return per metric (max 12)
+        cik:         Company CIK
+        metrics:     income_statement | balance_sheet | cash_flow | all
+        period_type: quarterly or annual
+        limit:       Number of periods per metric (max 12)
     """
     limit = min(limit, 12)
 
@@ -104,7 +102,6 @@ async def get_financials(
         except Exception as e:
             errors[metric_name] = str(e)
 
-    # Compute free_cash_flow = operating_cash_flow - capex
     if "operating_cash_flow" in results and "capex" in results:
         ocf_by_period = {
             e["period_end"]: e["value"]
@@ -133,6 +130,5 @@ async def get_financials(
     }
     if errors:
         output["errors"] = errors
-        output["note"] = "Some metrics unavailable — company may not report them via XBRL."
-
+        output["note"] = "Some metrics unavailable via XBRL."
     return output

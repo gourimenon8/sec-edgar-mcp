@@ -6,7 +6,7 @@ Compares financial metrics across two periods for the same company.
 from .get_financials import get_financials
 
 
-def _find_period(data_series: list[dict], period_end: str) -> dict | None:
+def _find_period(data_series: list[dict], period_end: str):
     for entry in data_series:
         if entry.get("period_end", "").startswith(period_end[:7]):
             return entry
@@ -33,19 +33,18 @@ async def compare_filings(
     period_type: str = "quarterly",
 ) -> dict:
     """
-    Compare financial metrics between two filing periods for the same company.
+    Compare financial metrics between two filing periods.
 
     Args:
-        cik:         Company CIK (from search_company)
-        period_a:    Earlier period end date — YYYY-MM or YYYY-MM-DD
-        period_b:    Later period end date   — YYYY-MM or YYYY-MM-DD
+        cik:         Company CIK
+        period_a:    Earlier period end date (YYYY-MM)
+        period_b:    Later period end date (YYYY-MM)
         metrics:     Same options as get_financials
-        period_type: 'quarterly' or 'annual'
+        period_type: quarterly or annual
     """
     financial_data = await get_financials(
         cik=cik, metrics=metrics, period_type=period_type, limit=12
     )
-
     if "error" in financial_data:
         return financial_data
 
@@ -67,7 +66,6 @@ async def compare_filings(
 
         val_a = entry_a.get("value")
         val_b = entry_b.get("value")
-
         if val_a is None or val_b is None:
             missing_periods[metric_name] = {"reason": "Null value in one or both periods"}
             continue
@@ -96,8 +94,6 @@ async def compare_filings(
             for k, v in notable
         ],
     }
-
     if missing_periods:
         output["missing_or_unavailable"] = missing_periods
-
     return output
