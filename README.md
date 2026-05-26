@@ -71,7 +71,6 @@ sec-edgar-mcp/
 │           └── compare_filings.py  # Period-over-period comparison engine
 ├── tests/
 │   └── test_tools.py          # Async tests against live EDGAR API
-├── .env.example               # Environment variable template
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -91,29 +90,13 @@ sec-edgar-mcp/
 ```bash
 git clone https://github.com/yourhandle/sec-edgar-mcp.git
 cd sec-edgar-mcp
-python3.11 -m venv venv
-source venv/bin/activate       # Mac/Linux
-venv\Scripts\activate          # Windows
+pip install -e .
+```
+
+Or install dependencies directly:
+```bash
 pip install -r requirements.txt
 ```
-
----
-
-## Configuration
-
-The SEC requires a `User-Agent` header identifying your application. Copy the example env file and add your email:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```
-SEC_USER_AGENT=sec-edgar-mcp your-email@example.com
-```
-
-The format must be `appname your-email@example.com` — this is an SEC requirement for accessing EDGAR data. Your `.env` file is gitignored and will never be committed.
 
 ---
 
@@ -122,53 +105,14 @@ The format must be `appname your-email@example.com` — this is an SEC requireme
 ### Run the server (stdio mode — for MCP clients)
 
 ```bash
-python -m src.sec_edgar_mcp
-```
-
-### Quick test (verify everything works)
-
-Create a `test_run.py` in the project root:
-
-```python
-import asyncio
-import sys
-sys.path.insert(0, '.')
-from src.sec_edgar_mcp.tools import search_company, get_financials
-
-async def main():
-    print('Testing search_company...')
-    result = await search_company('AAPL')
-    print('CIK:', result['cik'])
-
-    print('\nTesting get_financials...')
-    fin = await get_financials(cik=result['cik'], metrics='income_statement', period_type='quarterly', limit=4)
-    for entry in fin['data']['revenue']:
-        print(f'  {entry["period_end"]}: ${entry["value"]:,.0f}')
-
-asyncio.run(main())
-```
-
-```bash
-python test_run.py
-```
-
-Expected output:
-```
-Testing search_company...
-CIK: 320193
-
-Testing get_financials...
-  2024-09-28: $94,930,000,000
-  2024-06-29: $85,777,000,000
-  2024-03-30: $90,753,000,000
-  2023-12-30: $119,575,000,000
+python -m sec_edgar_mcp
 ```
 
 ### Connect to Claude Desktop
 
 Add this block to your `claude_desktop_config.json`:
 
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
 **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
@@ -176,14 +120,14 @@ Add this block to your `claude_desktop_config.json`:
   "mcpServers": {
     "sec-edgar": {
       "command": "python",
-      "args": ["-m", "src.sec_edgar_mcp"],
+      "args": ["-m", "sec_edgar_mcp"],
       "cwd": "/absolute/path/to/sec-edgar-mcp"
     }
   }
 }
 ```
 
-Restart Claude Desktop. The SEC EDGAR tools will appear in the tools panel automatically.
+Restart Claude Desktop. You should see the SEC EDGAR tools appear in the tools panel.
 
 ### Connect to Cursor
 
@@ -193,7 +137,7 @@ In Cursor settings → MCP Servers, add:
 {
   "sec-edgar": {
     "command": "python",
-    "args": ["-m", "src.sec_edgar_mcp"],
+    "args": ["-m", "sec_edgar_mcp"],
     "cwd": "/absolute/path/to/sec-edgar-mcp"
   }
 }
@@ -204,11 +148,11 @@ In Cursor settings → MCP Servers, add:
 ## Running Tests
 
 ```bash
-pip install pytest pytest-asyncio
+pip install -e ".[dev]"
 pytest tests/ -v
 ```
 
-Tests make live calls to `data.sec.gov` using Apple (AAPL) as the test subject. To skip in CI:
+Tests make live calls to `data.sec.gov`. To skip in CI:
 
 ```bash
 SKIP_LIVE_TESTS=1 pytest tests/ -v
@@ -230,7 +174,6 @@ SKIP_LIVE_TESTS=1 pytest tests/ -v
 - [`mcp`](https://github.com/anthropics/python-sdk) — Anthropic's Python MCP SDK (FastMCP)
 - [`httpx`](https://www.python-httpx.org/) — Async HTTP client
 - [`pydantic`](https://docs.pydantic.dev/) — Tool input validation
-- [`python-dotenv`](https://pypi.org/project/python-dotenv/) — Environment variable loading
 - SEC EDGAR Public APIs — `data.sec.gov`, `efts.sec.gov`
 
 ---
