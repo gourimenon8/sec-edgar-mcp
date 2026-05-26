@@ -29,7 +29,6 @@ FINANCIAL_CONCEPTS = {
     # Cash Flow
     "operating_cash_flow": ("us-gaap", "NetCashProvidedByUsedInOperatingActivities"),
     "capex": ("us-gaap", "PaymentsToAcquirePropertyPlantAndEquipment"),
-    "free_cash_flow": ("us-gaap", "FreeCashFlow"),
 }
 
 METRIC_GROUPS = {
@@ -144,5 +143,22 @@ async def get_financials(
     if errors:
         output["errors"] = errors
         output["note"] = "Some metrics could not be fetched. This company may not report them via XBRL."
+
+    # Compute free_cash_flow = operating_cash_flow - capex (not a native XBRL tag)
+    if "operating_cash_flow" in results and "capex" in results:
+        fcf_series = []
+        ocf_by_period = {e["period_end"]: e["value"] for e in results["operating_cash_flow"]}
+        for capex_entry in results["capex"]:
+            period = capex_entry["period_end"]
+            ocf = ocf_by_period.get(period)
+            if ocf is not None and capex_entry["value"] is not None:
+                fcf_series.append({
+                    "period_end": period,
+                    "value": ocf - capex_entry["value"],
+                    "form": capex_entry["form"],
+                    "filed": capex_entry["filed"],
+                    "note": "computed: operating_cash_flow - capex"
+                })
+        results["free_cash_flow"] = fcf_series
 
     return output

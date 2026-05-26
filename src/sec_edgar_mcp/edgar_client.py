@@ -3,12 +3,19 @@ SEC EDGAR API client.
 Handles all HTTP communication with the SEC's public EDGAR endpoints.
 """
 
+import os
 import httpx
 from typing import Optional
+from dotenv import load_dotenv
 
-# SEC requires a User-Agent header identifying your app
+load_dotenv()
+
+# SEC requires a User-Agent header in the format "appname email@example.com"
+# Set SEC_USER_AGENT in your .env file — see .env.example
+_user_agent = os.getenv("SEC_USER_AGENT", "sec-edgar-mcp your-email@example.com")
+
 HEADERS = {
-    "User-Agent": os.getenv("SEC_USER_AGENT", "sec-edgar-mcp your-email@example.com"),
+    "User-Agent": _user_agent,
     "Accept-Encoding": "gzip, deflate",
 }
 
