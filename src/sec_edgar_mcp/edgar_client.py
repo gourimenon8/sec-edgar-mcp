@@ -28,6 +28,9 @@ async def get_json(url: str, params: Optional[dict] = None) -> dict:
     """Generic async GET request returning parsed JSON."""
     async with httpx.AsyncClient(headers=HEADERS, timeout=30.0) as client:
         response = await client.get(url, params=params)
+        if response.status_code >= 500:
+           return []
+
         response.raise_for_status()
         return response.json()
 

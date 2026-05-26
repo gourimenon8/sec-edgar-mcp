@@ -11,7 +11,7 @@ from ..edgar_client import fetch_company_concept
 # Curated map of financial concepts to XBRL tags
 FINANCIAL_CONCEPTS = {
     # Income Statement
-    "revenue": ("us-gaap", "Revenues"),
+    "revenue": ("us-gaap", "RevenueFromContractWithCustomerExcludingAssessedTax"),
     "net_income": ("us-gaap", "NetIncomeLoss"),
     "gross_profit": ("us-gaap", "GrossProfit"),
     "operating_income": ("us-gaap", "OperatingIncomeLoss"),
