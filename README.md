@@ -8,7 +8,7 @@ Ask Claude questions like *"How has Apple's free cash flow trended over the last
 
 ## What is MCP?
 
-The **Model Context Protocol** is an open standard (by Anthropic) that lets AI models call external tools in a structured, consistent way — think of it as USB-C for AI integrations. This server implements that protocol on top of the SEC's public EDGAR APIs.
+The **Model Context Protocol** is an open standard (by Anthropic) that lets AI models call external tools in a structured, consistent way. This server implements that protocol on top of the SEC's public EDGAR APIs.
 
 ```
 ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
